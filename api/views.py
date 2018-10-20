@@ -1,33 +1,11 @@
 from django.shortcuts import render
 from rest_framework import viewsets
-from .serializer import FireSerializer
+from .serializer import FireSerializer, CommentSerializer
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.renderers import JSONRenderer
 from rest_framework.parsers import JSONParser
-from .models import Fire
-
-
-@csrf_exempt
-def fire_list(request, id):
-    """
-    List all code snippets, or create a new snippet.
-    """
-    if request.method == 'GET':
-        if id != 'all':
-            snippets = Fire.objects.filter(id=id)
-        else:
-            snippets = Fire.objects.all()
-        serializer = FireSerializer(snippets, many=True)
-        return JsonResponse(serializer.data, safe=False)
-
-    elif request.method == 'POST':
-        data = JSONParser().parse(request)
-        serializer = FireSerializer(data=data)
-        if serializer.is_valid():
-            serializer.save()
-            return JsonResponse(serializer.data, status=201)
-        return JsonResponse(serializer.errors, status=400)
+from .models import Fire, Comment, UpdateTime
 
 
 class FireViewSet(viewsets.ModelViewSet):
@@ -41,3 +19,40 @@ class FireViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save()
+
+
+class CommentViewSet(viewsets.ModelViewSet):
+    serializer_class = CommentSerializer
+
+    def get_object(self, queryset=None):
+        return super().get_object()
+
+    def get_queryset(self):
+        return  Comment.objects.filter()
+
+    def perform_create(self, serializer):
+        serializer.save()
+
+from dbfread import DBF
+import json
+from django.utils import timezone
+from os import system
+
+def get_nasa_data(request):
+    file = "/tmp/nasa/MODIS_C6_Global_24h.dbf"
+    url = "https://firms.modaps.eosdis.nasa.gov/active_fire/c6/shapes/zips/MODIS_C6_Global_24h.zip"
+    first = UpdateTime.objects.first()
+    time = first.time
+    time = timezone.now() - time
+    if time.total_seconds()>600: #1800 means 30 minutes
+        system("rm -r /tmp/nasa/")
+        system("rm -r /tmp/data.zip")
+        system("curl {0} --output /tmp/data.zip".format(url))
+        system("unzip data.zip -d /tmp/nasa")
+        first.time = timezone.now()
+        first.save()
+    data = []
+    for record in DBF(file):
+        record['ACQ_DATE'] = str(record['ACQ_DATE'])
+        data.append(record)
+    return HttpResponse(json.dumps(data), content_type="application/json")

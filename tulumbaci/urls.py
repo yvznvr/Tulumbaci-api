@@ -20,11 +20,11 @@ from api.views import *
 from rest_framework import routers
 
 router = routers.DefaultRouter()
-router.register(r'api', FireViewSet, base_name='FireViewSet')
+router.register(r'api/fire', FireViewSet, base_name='FireViewSet')
+router.register(r'api/comment', CommentViewSet, base_name='CommentViewSet')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    #path(r'api/', include('rest_framework.urls')),
-    # path(r'api/get/<id>', fire_list),
+    path(r'api/nasa/', get_nasa_data),
     path(r'', include(router.urls)),
 ]
