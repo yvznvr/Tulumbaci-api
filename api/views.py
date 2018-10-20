@@ -45,8 +45,11 @@ def get_nasa_data(request):
     time = first.time
     time = timezone.now() - time
     if time.total_seconds()>600: #1800 means 30 minutes
-        system("rm -r /tmp/nasa/")
-        system("rm -r /tmp/data.zip")
+        try:
+            system("rm -r /tmp/nasa/")
+            system("rm -r /tmp/data.zip")
+        except:
+            pass
         system("curl {0} --output /tmp/data.zip".format(url))
         system("unzip data.zip -d /tmp/nasa")
         first.time = timezone.now()
