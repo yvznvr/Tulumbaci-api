@@ -37,6 +37,7 @@ from dbfread import DBF
 import json
 from django.utils import timezone
 from os import system
+from time import sleep
 
 def get_nasa_data(request):
     file = "/tmp/nasa/MODIS_C6_Global_24h.dbf"
@@ -51,7 +52,7 @@ def get_nasa_data(request):
         except:
             pass
         system("curl {0} --output /tmp/data.zip".format(url))
-        system("unzip data.zip -d /tmp/nasa")
+        system("unzip /tmp/data.zip -d /tmp/nasa")
         first.time = timezone.now()
         first.save()
     data = []
